@@ -1,0 +1,8 @@
+{
+  "nome": "Restaurantes em bairros de Campinas",
+  "tipos": ["Restaurante"],
+  "modo_local": "brasil",
+  "municipios": ["Campinas - SP"],
+  "bairros": ["Cambuí", "Barão Geraldo", "Taquaral"],
+  "estrategia": "rapida"
+}

@@ -1,0 +1,7 @@
+{
+  "nome": "Cafeterias em Lisboa e Buenos Aires",
+  "tipos": ["Cafeteria"],
+  "modo_local": "livre",
+  "locais_livres": ["Lisboa, Portugal", "Palermo, Buenos Aires, Argentina"],
+  "estrategia": "rapida"
+}

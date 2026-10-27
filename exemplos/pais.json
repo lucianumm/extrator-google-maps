@@ -1,0 +1,8 @@
+{
+  "nome": "Clínicas dentárias nas 10 maiores cidades de Portugal",
+  "tipos": ["Clínica dentária"],
+  "modo_local": "pais",
+  "pais": { "codigo": "PT", "max_cidades": 10 },
+  "idioma": "auto",
+  "estrategia": "rapida"
+}

@@ -1,0 +1,7 @@
+{
+  "nome": "Farmácias num raio de 2 km da Av. Paulista",
+  "tipos": ["Farmácia"],
+  "modo_local": "ponto",
+  "ponto": { "lat": -23.5614, "lon": -46.6559, "raio_km": 2 },
+  "densidade": "densa"
+}

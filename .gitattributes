@@ -1,0 +1,10 @@
+* text=auto eol=lf
+*.bat text eol=crlf
+*.sh text eol=lf
+*.png binary
+*.jpg binary
+*.pem text eol=lf
+package-lock.json -diff
+dados/municipios.json -diff
+dados/cidades-mundo.json -diff
+dados/paises.json -diff

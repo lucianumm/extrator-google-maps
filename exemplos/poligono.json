@@ -1,0 +1,10 @@
+{
+  "nome": "Padarias dentro de uma área desenhada (Centro de Curitiba)",
+  "tipos": ["Padaria"],
+  "modo_local": "poligono",
+  "poligono": {
+    "type": "Polygon",
+    "coordinates": [[[-49.2800, -25.4200], [-49.2600, -25.4200], [-49.2600, -25.4400], [-49.2800, -25.4400], [-49.2800, -25.4200]]]
+  },
+  "densidade": "densa"
+}

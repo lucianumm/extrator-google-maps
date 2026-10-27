@@ -1,0 +1,10 @@
+{
+  "nome": "Dentistas em Goiânia (exemplo)",
+  "tipos": ["Dentista"],
+  "modo_local": "brasil",
+  "municipios": ["Goiânia - GO"],
+  "estrategia": "rapida",
+  "max_paginas": 2,
+  "detalhes": { "ativo": false },
+  "filtros": { "excluir_fechados": true }
+}

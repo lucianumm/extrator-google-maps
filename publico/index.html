@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Extrator Google Maps</title>
+  <link rel="icon" href="icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="marca"><img src="icone.svg" alt=""> <span>Extrator Google Maps</span></div>
+    <nav>
+      <button class="aba-nav ativa" data-tela="nova">Nova extração</button>
+      <button class="aba-nav" data-tela="tarefas">Tarefas <span id="contador-ativas" class="pilula oculto"></span></button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ======================= NOVA EXTRAÇÃO ======================= -->
+    <section id="tela-nova" class="tela ativa">
+      <form id="form" autocomplete="off">
+        <details class="cartao guia" id="guia" open>
+          <summary><h2>Como funciona — leia em 30 segundos</h2></summary>
+          <ol class="guia-passos">
+            <li><b>O que</b> — escolha um ou mais tipos de negócio (dentista, pizzaria…). Cada tipo vira uma busca separada.</li>
+            <li><b>Onde</b> — escolha a área: cidades do Brasil, as maiores cidades de <b>outro país</b>, um lugar digitado, um ponto no mapa, uma área desenhada ou links do Maps.</li>
+            <li><b>Como</b> — <i>Rápida</i> para cidades pequenas e médias; <i>Grade</i> para capitais e áreas grandes (encontra muito mais, mas demora).</li>
+            <li><b>Filtros e extras</b> são opcionais. Clique em <b>Calcular plano</b> para ver quantas buscas e quanto tempo antes de iniciar.</li>
+          </ol>
+          <p class="ajuda">Dica de precisão: deixe marcado <i>Somente resultados dentro da área</i> — o Google mistura empresas de cidades vizinhas e o extrator descarta as que estão fora (pelo endereço, pela fronteira oficial ou pela distância).</p>
+        </details>
+
+        <div class="cartao">
+          <label class="rotulo" for="nome">Nome da tarefa <small>(opcional)</small></label>
+          <input id="nome" type="text" placeholder="Ex.: Dentistas de Campinas">
+          <p class="ajuda dica">Só para você reconhecer a extração na lista de <b>Tarefas</b> e no nome do arquivo exportado. Se deixar vazio, o nome é montado com os tipos e o local.</p>
+        </div>
+
+        <!-- Tipos -->
+        <div class="cartao">
+          <h2>1. O que você quer extrair?</h2>
+          <p class="ajuda explica">Diga que tipo de empresa você procura — é o mesmo texto que você digitaria na busca do Google Maps. <b>Cada tipo vira uma busca separada</b> em cada local escolhido, então 3 tipos em 10 cidades = 30 buscas. Você pode escolher da lista (digite parte do nome, ex.: <i>odonto</i>), digitar qualquer termo e teclar <b>Enter</b>, adicionar um grupo inteiro (ex.: <i>Saúde</i>) ou colar vários de uma vez. Dica: termos parecidos (<i>Dentista</i>, <i>Clínica odontológica</i>) aumentam a cobertura — empresas repetidas são removidas automaticamente.</p>
+          <div class="seletor" id="sel-tipos">
+            <div class="chips" id="chips-tipos"></div>
+            <input id="busca-tipo" type="text" placeholder="Buscar tipo (ex.: dentista, pizzaria, academia)…">
+            <div class="lista-sugestoes oculto" id="sug-tipos"></div>
+          </div>
+          <div class="linha acoes-pequenas">
+            <select id="grupo-tipos"><option value="">Adicionar um grupo inteiro…</option></select>
+            <button type="button" class="botao secundario" id="btn-massa-tipos">Adicionar em massa</button>
+            <button type="button" class="botao link" id="btn-limpar-tipos">Limpar</button>
+          </div>
+          <div id="massa-tipos" class="oculto">
+            <textarea id="txt-massa-tipos" rows="4" placeholder="Um tipo por linha ou separados por vírgula"></textarea>
+            <button type="button" class="botao secundario" id="btn-add-massa-tipos">Adicionar</button>
+          </div>
+        </div>
+
+        <!-- Localidade -->
+        <div class="cartao">
+          <h2>2. Onde?</h2>
+          <p class="ajuda explica">Escolha <b>em que área</b> procurar. Cada aba é um jeito diferente de definir a área — use a que for mais fácil para o seu caso. Só a aba que estiver aberta ao iniciar é usada.</p>
+          <div class="abas" id="abas-local">
+            <button type="button" class="aba ativa" data-modo="brasil">Brasil (estados e cidades)</button>
+            <button type="button" class="aba" data-modo="pais">Outro país</button>
+            <button type="button" class="aba" data-modo="livre">Qualquer lugar</button>
+            <button type="button" class="aba" data-modo="ponto">Ponto + raio</button>
+            <button type="button" class="aba" data-modo="poligono">Polígono</button>
+            <button type="button" class="aba" data-modo="links">Links do Maps</button>
+          </div>
+
+          <div class="painel-local ativo" data-modo="brasil">
+            <p class="ajuda explica">Usa a base oficial do IBGE: some estados inteiros, mesorregiões e cidades. Cada cidade vira uma busca própria, centrada nela — por isso é o modo mais preciso para o Brasil.</p>
+            <div class="grade-2">
+              <div>
+                <label class="rotulo" for="uf">Estado</label>
+                <select id="uf"><option value="">Selecione o estado…</option></select>
+                <div class="linha acoes-pequenas">
+                  <button type="button" class="botao secundario" id="btn-estado-inteiro" disabled>Adicionar estado inteiro</button>
+                  <button type="button" class="botao link" id="btn-brasil-inteiro" title="Todos os municípios do IBGE">Brasil inteiro</button>
+                </div>
+                <p class="ajuda dica"><b>Estado inteiro</b> busca em todos os municípios do estado (pode ser demorado em estados grandes).</p>
+                <label class="rotulo" for="meso">Mesorregião</label>
+                <div class="linha">
+                  <select id="meso" disabled><option value="">Selecione o estado primeiro</option></select>
+                  <button type="button" class="botao secundario" id="btn-meso" disabled>Adicionar</button>
+                </div>
+                <p class="ajuda dica">Mesorregião é um grupo de cidades vizinhas definido pelo IBGE (ex.: <i>Norte Mato-grossense</i>). O número entre parênteses é quantas cidades ela tem.</p>
+              </div>
+              <div>
+                <label class="rotulo" for="busca-mun">Município</label>
+                <div class="seletor">
+                  <input id="busca-mun" type="text" placeholder="Digite o nome da cidade…">
+                  <div class="lista-sugestoes oculto" id="sug-mun"></div>
+                </div>
+                <p class="ajuda">Digite parte do nome e escolha na lista. Com um estado selecionado ao lado, a lista mostra só cidades dele. Para várias de uma vez, use <b>Colar lista de cidades</b> (uma por linha, com a UF: <i>Campinas - SP</i>).</p>
+                <button type="button" class="botao link" id="btn-massa-mun">Colar lista de cidades</button>
+                <div id="massa-mun" class="oculto">
+                  <textarea id="txt-massa-mun" rows="4" placeholder="Uma por linha, ex.:&#10;Campinas - SP&#10;Belo Horizonte, MG&#10;Curitiba"></textarea>
+                  <button type="button" class="botao secundario" id="btn-add-massa-mun">Adicionar</button>
+                </div>
+              </div>
+            </div>
+            <label class="rotulo">Selecionados <span id="total-mun" class="ajuda"></span></label>
+            <div class="chips caixa" id="chips-locais"><span class="vazio">Nenhuma localidade selecionada</span></div>
+            <p class="ajuda dica">Tudo o que você adicionou acima aparece aqui. Clique no <b>×</b> para remover. Cidades repetidas (ex.: uma cidade e o estado dela) são contadas uma vez só.</p>
+            <label class="rotulo" for="bairros">Bairros <small>(opcional — busca cada bairro dentro de cada cidade, só no modo rápido)</small></label>
+            <textarea id="bairros" rows="2" placeholder="Um por linha, ex.: Centro, Cambuí, Barão Geraldo"></textarea>
+            <p class="ajuda dica">Use quando só interessam alguns bairros. Cada bairro é buscado em <b>cada</b> cidade selecionada (ex.: "Centro, Campinas - SP"), por isso funciona melhor com uma cidade só. Deixe vazio para buscar a cidade inteira.</p>
+          </div>
+
+          <div class="painel-local" data-modo="pais">
+            <p class="ajuda explica">Busca nas <b>maiores cidades de qualquer país</b> (base <a href="https://www.geonames.org" target="_blank" rel="noopener">GeoNames</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>, com ~32 mil cidades de 15 mil+ habitantes). Escolha o país, opcionalmente alguns estados/províncias, e quantas cidades incluir — das mais populosas para as menores. O extrator ajusta o país do Google sozinho e descarta resultados de outros países ou longe da cidade.</p>
+            <div class="grade-2">
+              <div>
+                <label class="rotulo" for="busca-pais">País</label>
+                <div class="seletor">
+                  <input id="busca-pais" type="text" placeholder="Digite o país (ex.: Portugal, Estados Unidos, Argentina)…">
+                  <div class="lista-sugestoes oculto" id="sug-pais"></div>
+                </div>
+                <div class="chips caixa" id="chip-pais"><span class="vazio">Nenhum país escolhido</span></div>
+              </div>
+              <div>
+                <label class="rotulo" for="busca-regiao-pais">Estados / províncias <small>(opcional — vazio = país inteiro)</small></label>
+                <div class="seletor">
+                  <input id="busca-regiao-pais" type="text" placeholder="Escolha o país primeiro" disabled>
+                  <div class="lista-sugestoes oculto" id="sug-regiao-pais"></div>
+                </div>
+                <div class="chips caixa" id="chips-regioes-pais"><span class="vazio">País inteiro</span></div>
+              </div>
+            </div>
+            <div class="grade-3">
+              <div><label class="rotulo" for="pais-max">Quantas cidades <small>(0 = todas)</small></label><input id="pais-max" type="number" min="0" value="20"><p class="ajuda dica">As mais populosas primeiro. 20 já cobre as principais cidades da maioria dos países.</p></div>
+              <div><label class="rotulo" for="pais-pop">População mínima da cidade</label><input id="pais-pop" type="number" min="0" step="1000" value="0"><p class="ajuda dica">Ex.: 100000 para pegar só cidades com 100 mil habitantes ou mais. 0 = sem mínimo.</p></div>
+              <div><p class="ajuda">Dica: digite o tipo de negócio no idioma local para mais resultados (ex.: <i>dentist</i> nos EUA, <i>odontólogo</i> na Argentina) e use <b>Avançado → Idioma: Automático</b>.</p></div>
+            </div>
+            <label class="rotulo">Cidades que serão buscadas <span id="total-cidades-pais" class="ajuda"></span></label>
+            <div class="caixa previa-cidades" id="previa-cidades"><span class="vazio">Escolha um país para ver as cidades</span></div>
+          </div>
+
+          <div class="painel-local" data-modo="livre">
+            <p class="ajuda explica">Para bairros, regiões ou cidades fora das bases. O autocompletar vem do próprio Google Maps; texto livre (Enter) também funciona — o extrator tenta localizá-lo no mapa antes de buscar.</p>
+            <label class="rotulo" for="busca-livre">Localidade (cidade, bairro, região, país…)</label>
+            <div class="seletor">
+              <input id="busca-livre" type="text" placeholder="Ex.: Lisboa, Portugal · Copacabana, Rio de Janeiro · Miami">
+              <div class="lista-sugestoes oculto" id="sug-livre"></div>
+            </div>
+            <p class="ajuda">Sugestões vêm do próprio Google Maps. Tecle Enter para usar o texto como está.</p>
+            <div class="chips caixa" id="chips-livres"><span class="vazio">Nenhuma localidade</span></div>
+            <label class="rotulo" for="raio-livre">Raio da grade (km) <small>(usado só na estratégia Grade)</small></label>
+            <input id="raio-livre" type="number" min="0.5" step="0.5" value="5">
+            <p class="ajuda dica">Na estratégia <b>Grade</b>, a área buscada é um círculo com este raio em volta de cada lugar. Na <b>Rápida</b> este campo é ignorado.</p>
+          </div>
+
+          <div class="painel-local" data-modo="ponto">
+            <p class="ajuda">Busca tudo dentro de um círculo (sempre em grade). Clique no mapa para escolher o ponto central ou digite as coordenadas.</p>
+            <div class="grade-3">
+              <div><label class="rotulo" for="lat">Latitude</label><input id="lat" type="number" step="any" placeholder="-22.9056"></div>
+              <div><label class="rotulo" for="lon">Longitude</label><input id="lon" type="number" step="any" placeholder="-47.0608"></div>
+              <div><label class="rotulo" for="raio">Raio (km)</label><input id="raio" type="number" min="0.2" step="0.1" value="2"><p class="ajuda dica">Distância máxima a partir do ponto. 2 km ≈ um bairro grande.</p></div>
+            </div>
+            <div class="mapa" id="mapa-ponto"></div>
+          </div>
+
+          <div class="painel-local" data-modo="poligono">
+            <p class="ajuda">Clique no mapa para desenhar os vértices, ou cole um GeoJSON (ex.: do <a href="https://geojson.io" target="_blank" rel="noopener">geojson.io</a>).</p>
+            <div class="linha acoes-pequenas">
+              <button type="button" class="botao secundario" id="btn-poli-desfazer">Desfazer vértice</button>
+              <button type="button" class="botao secundario" id="btn-poli-limpar">Limpar</button>
+            </div>
+            <div class="mapa" id="mapa-poligono"></div>
+            <textarea id="geojson" rows="4" placeholder='{"type":"FeatureCollection","features":[...]}'></textarea>
+            <p class="ajuda dica">Clique ponto a ponto em volta da área (a partir do 3º ponto ela fecha sozinha). Este campo se preenche automaticamente; só cole algo aqui se tiver um arquivo GeoJSON pronto.</p>
+          </div>
+
+          <div class="painel-local" data-modo="links">
+            <p class="ajuda explica">Fez a busca no Google Maps e quer exatamente aqueles resultados? Copie o link da barra de endereço e cole aqui (um por linha). Links de um lugar específico trazem só aquele lugar.</p>
+            <label class="rotulo" for="links">Links de busca ou de lugar do Google Maps</label>
+            <textarea id="links" rows="5" placeholder="https://www.google.com/maps/search/restaurantes+em+campinas&#10;https://www.google.com/maps/place/..."></textarea>
+          </div>
+
+          <div class="linha checks">
+            <label title="Confere cidade e UF do endereço (Brasil), a fronteira oficial (grade/polígono) ou a distância até a cidade (outro país)"><input type="checkbox" id="dentro-cidade" checked> Somente resultados dentro da área/cidade escolhida <small>(recomendado)</small></label>
+            <label title="Útil em listas grandes: se você cancelar no meio, terá um pouco de cada região em vez de só as primeiras cidades da lista"><input type="checkbox" id="embaralhar"> Embaralhar a ordem das cidades</label>
+          </div>
+          <div>
+            <p class="ajuda dica"><b>Somente dentro da área:</b> o Google costuma misturar empresas de cidades vizinhas; com esta opção elas são descartadas (aparecem como "fora da área" no progresso). <b>Embaralhar:</b> em listas grandes, busca as cidades em ordem aleatória — se você cancelar no meio, terá um pouco de cada região.</p>
+          </div>
+        </div>
+
+        <!-- Estratégia -->
+        <div class="cartao">
+          <h2>3. Como buscar?</h2>
+          <p class="ajuda explica">O Google Maps mostra no máximo <b>~400 resultados por busca</b>. Em cidades pequenas isso basta; numa capital, "dentista em São Paulo" tem milhares e a maioria ficaria de fora. A <b>Grade</b> resolve isso fazendo muitas buscas pequenas, uma em cada ponto da área. Na dúvida, comece com <b>Rápida</b> e use <b>Calcular plano</b> para comparar.</p>
+          <div class="opcoes-estrategia">
+            <label class="opcao"><input type="radio" name="estrategia" value="rapida" checked>
+              <span><strong>Rápida</strong><br><small>Uma busca por tipo × cidade, até 400 resultados cada. Ideal para cidades pequenas e médias e para muitas cidades de uma vez.</small></span></label>
+            <label class="opcao"><input type="radio" name="estrategia" value="grade">
+              <span><strong>Grade (mais completa)</strong><br><small>Divide a área em pontos (fronteira oficial do IBGE no Brasil; círculo proporcional à população em outros países) e busca em cada um. Encontra muito mais em capitais e cidades grandes, porém demora mais.</small></span></label>
+          </div>
+          <div class="grade-3" id="opcoes-grade">
+            <div><label class="rotulo" for="densidade">Densidade da grade</label>
+              <select id="densidade">
+                <option value="larga">Larga — 1 ponto a cada 2 km</option>
+                <option value="media" selected>Média — 1 ponto por km</option>
+                <option value="densa">Densa — a cada 500 m (demorado)</option>
+                <option value="muito_densa">Muito densa — a cada 250 m (muito demorado)</option>
+              </select><p class="ajuda dica">Distância entre os pontos da grade. Mais denso = encontra mais em áreas movimentadas, mas faz muito mais buscas. <b>Média</b> serve para quase tudo.</p></div>
+            <div><label class="rotulo" for="paginas-ponto">Páginas por ponto (20 por página)</label><input id="paginas-ponto" type="number" min="1" max="20" value="2"><p class="ajuda dica">Quantas páginas de resultados ler em cada ponto. 2 páginas = até 40 empresas por ponto; aumente só se a área for muito densa.</p></div>
+            <div><label class="rotulo" for="max-paginas">Páginas por busca rápida</label><input id="max-paginas" type="number" min="1" max="20" value="20"><p class="ajuda dica">Só na Rápida. 20 páginas = até 400 empresas por busca (o máximo do Google). Diminua para um teste rápido.</p></div>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="cartao">
+          <h2>4. Filtros <small>(opcional)</small></h2>
+          <p class="ajuda explica">Escolha quais empresas <b>entram na planilha</b>. Os filtros não mudam o que é buscado no Google, só descartam o que não interessa (aparecem como "filtrados" no progresso). Deixe em branco o que não quiser filtrar. Exemplos: <i>Sem site</i> para achar quem precisa de um site; <i>Mín. de avaliações = 20</i> para empresas já estabelecidas.</p>
+          <div class="grade-4">
+            <div><label class="rotulo" for="f-min-av">Mín. de avaliações</label><input id="f-min-av" type="number" min="0"></div>
+            <div><label class="rotulo" for="f-max-av">Máx. de avaliações</label><input id="f-max-av" type="number" min="0"></div>
+            <div><label class="rotulo" for="f-nota-min">Nota mínima</label><input id="f-nota-min" type="number" min="0" max="5" step="0.1"></div>
+            <div><label class="rotulo" for="f-nota-max">Nota máxima</label><input id="f-nota-max" type="number" min="0" max="5" step="0.1"></div>
+            <div><label class="rotulo" for="f-site">Site</label>
+              <select id="f-site"><option value="">Tanto faz</option><option value="com">Com site</option><option value="sem">Sem site</option></select></div>
+            <div><label class="rotulo" for="f-tel">Telefone</label>
+              <select id="f-tel"><option value="">Tanto faz</option><option value="com">Com telefone</option><option value="sem">Sem telefone</option></select></div>
+            <div><label class="rotulo" for="f-cat">Categoria contém</label><input id="f-cat" type="text" placeholder="ex.: odonto, implante"><p class="ajuda dica">Mantém só quem tem alguma destas palavras na categoria do Google. Separe por vírgula.</p></div>
+            <div><label class="rotulo" for="f-cat-ex">Excluir categoria</label><input id="f-cat-ex" type="text" placeholder="ex.: hospital"><p class="ajuda dica">Descarta quem tem alguma destas palavras na categoria.</p></div>
+          </div>
+          <label class="check"><input type="checkbox" id="f-fechados" checked> Ignorar estabelecimentos fechados (temporária ou permanentemente)</label>
+        </div>
+
+        <!-- Extras -->
+        <div class="cartao">
+          <h2>5. Dados extras</h2>
+          <p class="ajuda explica">A busca já traz nome, categoria, nota, nº de avaliações, telefone, site, endereço, coordenadas e horários. Aqui você liga coletas <b>adicionais</b>, feitas depois da busca, empresa por empresa. Cada opção ligada <b>aumenta o tempo</b> da extração — marque só o que for usar.</p>
+
+          <label class="check"><input type="checkbox" id="x-detalhes" checked> <strong>Detalhes completos de cada lugar</strong> <small>(descrição, foto de capa, total de fotos, distribuição das notas, palavras-chave das avaliações, horários de pico, concorrentes, plus code)</small></label>
+          <div class="sub"><p class="ajuda dica">Faz uma consulta extra por empresa. Desmarque para extrair bem mais rápido quando só precisa de nome, telefone e endereço.</p></div>
+
+          <label class="check"><input type="checkbox" id="x-fotos"> <strong>Extrair fotos</strong> <small>(links das fotos de cada lugar; opcionalmente baixa os arquivos)</small></label>
+          <div class="grade-3 sub" id="opc-fotos">
+            <div><label class="rotulo" for="x-fotos-max">Máx. por lugar (0 = todas)</label><input id="x-fotos-max" type="number" min="0" value="20"></div>
+            <div><label class="check"><input type="checkbox" id="x-fotos-baixar"> Baixar os arquivos para a pasta da tarefa</label>
+                 <label class="check"><input type="checkbox" id="x-fotos-sv"> Incluir imagens do Street View</label></div>
+            <div><p class="ajuda">Sem login o Google mostra dezenas de fotos por lugar. Para a galeria completa, entre na sua conta Google em <b>Avançado → Sessão do Google</b>.</p></div>
+          </div>
+
+          <label class="check"><input type="checkbox" id="x-aval"> <strong>Extrair avaliações</strong> <small>(texto, nota, data e autor de cada avaliação)</small></label>
+          <div class="grade-3 sub" id="opc-aval">
+            <div><label class="rotulo" for="x-aval-max">Máx. por lugar (0 = todas)</label><input id="x-aval-max" type="number" min="0" value="20"></div>
+            <div><label class="rotulo" for="x-aval-ord">Ordenar por</label>
+              <select id="x-aval-ord"><option value="mais_recentes">Mais recentes</option><option value="mais_relevantes">Mais relevantes</option><option value="maior_nota">Maior nota</option><option value="menor_nota">Menor nota</option></select></div>
+            <div><label class="rotulo" for="x-aval-desde">Somente a partir de</label><input id="x-aval-desde" type="date"><p class="ajuda dica">Opcional: ignora avaliações mais antigas que esta data.</p></div>
+          </div>
+
+          <label class="check"><input type="checkbox" id="x-contatos"> <strong>Buscar e-mails e redes sociais no site da empresa</strong> <small>(Instagram, Facebook, LinkedIn, WhatsApp, YouTube, TikTok, X)</small></label>
+          <div class="sub" id="opc-contatos">
+            <div class="grade-3">
+              <div><label class="rotulo" for="x-paginas">Páginas extras por site</label><input id="x-paginas" type="number" min="0" max="15" value="3"><p class="ajuda dica">Além da página inicial, quantas páginas do site visitar (ex.: Contato, Sobre). Mais páginas = mais e-mails, porém mais lento.</p></div>
+              <div><label class="rotulo" for="x-recom">E-mails recomendados</label>
+                <select id="x-recom"><option value="1">Melhor 1</option><option value="2">Melhores 2</option><option value="3">Melhores 3</option></select><p class="ajuda dica">Entre os e-mails achados, quantos indicar como os melhores (prioriza o domínio da empresa e descarta "no-reply").</p></div>
+            </div>
+            <p class="ajuda dica">Só funciona para empresas que têm site no Google. Os e-mails e perfis vêm do próprio site da empresa.</p>
+            <label class="check"><input type="checkbox" id="x-verificar"> Verificar se os e-mails existem</label>
+            <div class="sub"><p class="ajuda dica"><b>Grátis</b> consulta o servidor de e-mail da empresa direto (pode ser bloqueado pelo seu provedor de internet e, em volume, pôr seu IP em listas de bloqueio). <b>MillionVerifier</b> e <b>ZeroBounce</b> são serviços pagos e mais confiáveis; precisam da sua chave.</p></div>
+            <div class="grade-3 sub" id="opc-verificar">
+              <div><label class="rotulo" for="x-servico">Serviço de verificação</label>
+                <select id="x-servico">
+                  <option value="gratis">Grátis (DNS/MX + SMTP)</option>
+                  <option value="millionverifier">MillionVerifier (sua chave)</option>
+                  <option value="zerobounce">ZeroBounce (sua chave)</option>
+                </select></div>
+              <div><label class="rotulo" for="x-chave-verif">Chave de API do serviço</label><input id="x-chave-verif" type="password" placeholder="somente para serviços pagos"></div>
+              <div><label class="check"><input type="checkbox" id="x-verif-todos"> Verificar todos os e-mails (não só os recomendados)</label></div>
+            </div>
+          </div>
+
+          <label class="check"><input type="checkbox" id="x-leads"> <strong>Decisores e contatos do Apollo.io</strong> <small>(usa a sua chave de API do Apollo)</small></label>
+          <div class="sub" id="opc-leads">
+            <p class="ajuda dica">Procura no Apollo.io pessoas que trabalham na empresa (pelo domínio do site) e traz nome, cargo, e-mail e LinkedIn. Precisa de uma conta no Apollo e de uma chave de API criada no painel do Apollo. Consome créditos da sua conta Apollo.</p>
+            <div class="grade-4">
+              <div><label class="rotulo" for="x-apollo-chave">Chave de API do Apollo</label><input id="x-apollo-chave" type="password"></div>
+              <div><label class="rotulo" for="x-apollo-max">Máx. de pessoas por empresa</label><input id="x-apollo-max" type="number" min="1" max="25" value="3"></div>
+              <div><label class="rotulo" for="x-apollo-cargos">Cargos (separados por vírgula)</label><input id="x-apollo-cargos" type="text" placeholder="CEO, Diretor comercial, Sócio"></div>
+              <div><label class="rotulo" for="x-apollo-local">Localização da pessoa</label><input id="x-apollo-local" type="text" placeholder="São Paulo, Brazil"></div>
+            </div>
+            <label class="rotulo">Senioridade <small>(nível hierárquico das pessoas que interessam)</small></label>
+            <div class="linha checks" id="x-apollo-senior">
+              <label><input type="checkbox" value="owner" checked> Dono</label><label><input type="checkbox" value="founder" checked> Fundador</label>
+              <label><input type="checkbox" value="c_suite" checked> Diretoria (C-level)</label><label><input type="checkbox" value="partner"> Sócio</label>
+              <label><input type="checkbox" value="vp" checked> VP</label><label><input type="checkbox" value="head"> Head</label>
+              <label><input type="checkbox" value="director" checked> Diretor</label><label><input type="checkbox" value="manager"> Gerente</label>
+              <label><input type="checkbox" value="senior"> Sênior</label><label><input type="checkbox" value="entry"> Júnior</label><label><input type="checkbox" value="intern"> Estagiário</label>
+            </div>
+            <label class="rotulo">Status do e-mail no Apollo <small>(só traz pessoas cujo e-mail tenha um destes status)</small></label>
+            <div class="linha checks" id="x-apollo-status">
+              <label><input type="checkbox" value="verified" checked> Verificado</label><label><input type="checkbox" value="unverified"> Não verificado</label><label><input type="checkbox" value="likely to engage"> Provável engajamento</label>
+            </div>
+          </div>
+          <label class="check"><input type="checkbox" id="lembrar-chaves"> Lembrar as chaves de API neste computador</label>
+          <p class="ajuda dica">As chaves ficam só neste navegador e nunca são gravadas nos arquivos da tarefa. Não marque em computador compartilhado.</p>
+        </div>
+
+        <!-- Avançado -->
+        <details class="cartao">
+          <summary><h2>6. Avançado</h2> <small class="ajuda">idioma, limites, velocidade, conta Google e diagnóstico</small></summary>
+          <p class="ajuda explica">Você normalmente não precisa mexer aqui. Os padrões funcionam para buscas no Brasil.</p>
+          <div class="grade-4">
+            <div><label class="rotulo" for="idioma">Idioma dos dados</label>
+              <select id="idioma"><option value="pt-BR">Português (Brasil)</option><option value="auto">Automático (idioma do país)</option><option value="pt-PT">Português (Portugal)</option><option value="es">Espanhol</option><option value="en">Inglês</option><option value="fr">Francês</option><option value="it">Italiano</option><option value="de">Alemão</option><option value="nl">Holandês</option><option value="ja">Japonês</option></select>
+              <p class="ajuda">Idioma dos nomes de categorias, horários etc.</p></div>
+            <div><label class="rotulo" for="regiao">Região (país do Google)</label>
+              <select id="regiao"><option value="br">Brasil</option><option value="">Automático</option></select>
+              <p class="ajuda">No modo <i>Outro país</i> é ajustado sozinho.</p></div>
+            <div><label class="rotulo" for="max-consulta">Máx. resultados por busca</label><input id="max-consulta" type="number" min="1" placeholder="sem limite"><p class="ajuda dica">Para cada busca (tipo × cidade) depois de N empresas. Bom para pegar "as 50 primeiras de cada cidade".</p></div>
+            <div><label class="rotulo" for="max-total">Máx. resultados no total</label><input id="max-total" type="number" min="1" placeholder="sem limite"><p class="ajuda dica">Encerra a extração inteira ao chegar em N empresas. Útil para testes.</p></div>
+            <div><label class="rotulo" for="paralelo">Buscas em paralelo</label><input id="paralelo" type="number" min="1" max="6" value="2"><p class="ajuda dica">Quantas buscas rodam ao mesmo tempo (1 a 6).</p></div>
+          </div>
+          <p class="ajuda">Mais buscas em paralelo é mais rápido, mas aumenta a chance de o Google limitar temporariamente (o programa espera e tenta de novo).</p>
+
+          <h3>Sessão do Google</h3>
+          <p class="ajuda dica">Opcional. Sem conta o extrator funciona normalmente. Entrar na sua conta Google libera a galeria completa de fotos, horários de pico e concorrentes. Se o Google pedir verificação ("não sou robô"), use <b>Renovar sessão</b> e conclua na janela que abrir.</p>
+          <p class="ajuda" id="estado-sessao">Carregando…</p>
+          <div class="linha">
+            <button type="button" class="botao secundario" id="btn-login">Entrar na conta Google</button>
+            <button type="button" class="botao secundario" id="btn-renovar">Renovar sessão</button>
+            <button type="button" class="botao link" id="btn-limpar-sessao">Apagar sessão</button>
+          </div>
+          <label class="check"><input type="checkbox" id="auto-navegador" checked> Abrir o navegador automaticamente se o Google pedir verificação</label>
+
+          <h3>Diagnóstico</h3>
+          <p class="ajuda">Testa busca, detalhes, avaliações, fotos e sugestões no Google e mostra se o formato das respostas continua compatível.</p>
+          <button type="button" class="botao secundario" id="btn-diagnostico">Executar diagnóstico</button>
+          <div id="resultado-diagnostico"></div>
+        </details>
+
+        <div id="plano" class="cartao oculto"></div>
+        <div class="barra-iniciar">
+          <span id="estimativa" class="ajuda"></span>
+          <button type="button" class="botao secundario" id="btn-plano" title="Confere a configuração e mostra quantas buscas e quanto tempo, sem iniciar">Calcular plano</button>
+          <button type="submit" class="botao primario grande">Iniciar extração</button>
+        </div>
+        <p id="erro-form" class="erro oculto"></p>
+      </form>
+    </section>
+
+    <!-- ======================= TAREFAS ======================= -->
+    <section id="tela-tarefas" class="tela">
+      <p class="ajuda explica">Todas as extrações, da mais nova para a mais antiga. Elas continuam salvas depois de fechar o programa. Clique numa tarefa para ver os resultados; use <b>Excel</b>, <b>CSV</b> ou <b>JSON</b> para baixar. Os números: <b>empresas</b> = o que entrou na planilha · <b>buscas</b> = feitas/planejadas · <b>vistos</b> = tudo o que o Google devolveu · <b>filtrados</b> = descartados pelos seus filtros · <b>fora da área</b> = de outra cidade/país.</p>
+      <div id="lista-tarefas"></div>
+    </section>
+
+    <!-- ======================= DETALHE ======================= -->
+    <section id="tela-detalhe" class="tela">
+      <div class="linha">
+        <button class="botao link" id="btn-voltar">← Voltar às tarefas</button>
+      </div>
+      <div class="cartao" id="detalhe-cabecalho"></div>
+      <div class="cartao">
+        <p class="ajuda dica">Os resultados aparecem aqui enquanto a extração roda. Digite para procurar em qualquer coluna, marque as caixas para ver só quem tem site, telefone ou e-mail, e clique no título de uma coluna para ordenar. A exportação traz <b>todas</b> as empresas, não só as filtradas nesta tela.</p>
+        <div class="linha barra-resultados">
+          <input id="filtro-resultados" type="search" placeholder="Filtrar resultados (nome, categoria, cidade, telefone…)">
+          <label class="check"><input type="checkbox" id="so-site"> Com site</label>
+          <label class="check"><input type="checkbox" id="so-tel"> Com telefone</label>
+          <label class="check"><input type="checkbox" id="so-email"> Com e-mail</label>
+          <span id="contagem-resultados" class="ajuda"></span>
+        </div>
+        <div class="tabela-rolagem"><table id="tabela"><thead></thead><tbody></tbody></table></div>
+        <div class="linha paginacao" id="paginacao"></div>
+      </div>
+      <details class="cartao"><summary><h2>Registro de atividade</h2> <small class="ajuda">o que o extrator fez, passo a passo — veja aqui quando algo der errado</small></summary><pre id="log"></pre></details>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    Dados: <a href="https://www.ibge.gov.br" target="_blank" rel="noopener">IBGE</a> ·
+    países e cidades do mundo: <a href="https://www.geonames.org" target="_blank" rel="noopener">GeoNames</a>
+    (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) ·
+    mapas © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">colaboradores do OpenStreetMap</a> ·
+    código sob licença MIT — veja CREDITOS.md
+  </footer>
+
+  <dialog id="modal">
+    <div class="modal-topo"><h3 id="modal-titulo"></h3><button class="botao link" id="modal-fechar">Fechar ✕</button></div>
+    <div id="modal-corpo"></div>
+  </dialog>
+
+  <!-- Pedido de apoio (Pix): ao abrir o programa e ao concluir uma extração -->
+  <dialog id="apoio" class="dialogo-estreito" aria-labelledby="apoio-titulo">
+    <div class="modal-topo"><h3 id="apoio-titulo">☕ Contribua com um café</h3><button type="button" class="botao link" id="apoio-fechar-topo">Fechar ✕</button></div>
+    <div class="apoio-corpo">
+      <div id="apoio-contexto"></div>
+      <p>Este programa é <b>gratuito e de código aberto</b>. Se ele economizou o seu tempo, você pode contribuir com um café
+        por <b>Pix</b> — qualquer valor ajuda a mantê-lo funcionando e atualizado quando o Google mudar.</p>
+      <div class="apoio-grade">
+        <img id="apoio-qr" class="apoio-qr" alt="QR Code do Pix para contribuir com um café" width="220" height="220">
+        <div>
+          <p class="apoio-passos-titulo"><b>Como contribuir pelo QR Code</b></p>
+          <ol class="apoio-passos">
+            <li>Abra o aplicativo do seu banco e escolha <b>Pix → Ler QR Code</b> (ou "Pagar com QR Code").</li>
+            <li>Aponte a câmera do celular para o QR Code ao lado.</li>
+            <li>Digite o valor que quiser, <b>confira o nome do favorecido</b> e confirme.</li>
+          </ol>
+          <p class="ajuda">Prefere copiar? Clique em <b>Copiar código Pix</b> e cole no seu banco em <b>Pix → Pix Copia e Cola</b>.</p>
+          <p class="ajuda" id="apoio-dados"></p>
+        </div>
+      </div>
+      <p class="ajuda">Contribuir é opcional: o programa continua completo e gratuito para todos. Obrigado! 💛</p>
+      <div class="apoio-botoes">
+        <button type="button" class="botao secundario" id="apoio-copiar">Copiar código Pix</button>
+        <button type="button" class="botao" id="apoio-fechar">Fechar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Janela de erro: o que aconteceu, o que faltou e como resolver -->
+  <dialog id="erro-dialogo" class="dialogo-estreito" aria-labelledby="erro-titulo" role="alertdialog">
+    <div class="modal-topo"><h3 id="erro-titulo">Algo deu errado</h3><button type="button" class="botao link" id="erro-fechar-topo">Fechar ✕</button></div>
+    <div class="apoio-corpo">
+      <p id="erro-causa"></p>
+      <div id="erro-faltou-caixa" class="oculto"><p><b>O que faltou:</b></p><ul id="erro-faltou"></ul></div>
+      <div class="erro-solucao"><b>Como resolver:</b> <span id="erro-solucao"></span></div>
+      <details class="erro-tecnico"><summary>Detalhes técnicos</summary><pre id="erro-tecnico"></pre></details>
+      <div class="apoio-botoes">
+        <button type="button" class="botao secundario" id="erro-copiar">Copiar detalhes</button>
+        <button type="button" class="botao" id="erro-fechar">Fechar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="aviso" class="aviso oculto"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>

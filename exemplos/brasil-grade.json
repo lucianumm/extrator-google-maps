@@ -1,0 +1,10 @@
+{
+  "nome": "Pizzarias de São Paulo (grade completa)",
+  "tipos": ["Pizzaria"],
+  "modo_local": "brasil",
+  "municipios": ["São Paulo - SP"],
+  "estrategia": "grade",
+  "densidade": "media",
+  "paginas_por_ponto": 2,
+  "paralelismo": 2
+}

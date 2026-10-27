@@ -1,0 +1,9 @@
+{
+  "nome": "Academias de Goiás (estado inteiro) com 20+ avaliações",
+  "tipos": ["Academia"],
+  "modo_local": "brasil",
+  "estados": ["GO"],
+  "estrategia": "rapida",
+  "max_paginas": 5,
+  "filtros": { "excluir_fechados": true, "min_avaliacoes": 20, "nota_minima": 4 }
+}

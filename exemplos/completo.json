@@ -1,0 +1,46 @@
+{
+  "nome": "Exemplo com todas as opções (contatos, fotos, avaliações, Apollo)",
+  "tipos": ["Escritório de contabilidade"],
+  "modo_local": "brasil",
+  "municipios": ["Belo Horizonte - MG"],
+  "estrategia": "rapida",
+  "max_paginas": 20,
+  "somente_dentro_da_cidade": true,
+  "idioma": "pt-BR",
+  "regiao": "br",
+  "max_resultados_por_consulta": null,
+  "max_resultados_total": 500,
+  "paralelismo": 2,
+  "filtros": {
+    "excluir_fechados": true,
+    "min_avaliacoes": 5,
+    "max_avaliacoes": null,
+    "nota_minima": 4,
+    "nota_maxima": null,
+    "site": "com",
+    "telefone": "com",
+    "categoria_contem": "contab",
+    "categoria_exclui": ""
+  },
+  "detalhes": { "ativo": true },
+  "fotos": { "ativo": true, "maximo": 5, "baixar": false, "street_view": false },
+  "avaliacoes": { "ativo": true, "maximo": 10, "ordenacao": "mais_recentes", "desde": null },
+  "contatos": {
+    "ativo": true,
+    "paginas_extras": 3,
+    "recomendados": 1,
+    "verificar": false,
+    "verificar_todos": false,
+    "servico": "gratis",
+    "chave": ""
+  },
+  "leads": {
+    "ativo": false,
+    "chave": "",
+    "maximo": 3,
+    "cargos": "Sócio, Diretor",
+    "localizacoes": "Belo Horizonte, Brazil",
+    "senioridades": ["owner", "founder", "c_suite"],
+    "status_email": ["verified"]
+  }
+}

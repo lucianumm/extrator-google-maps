@@ -1,0 +1,8 @@
+{
+  "nome": "Dentistas e ortodontistas em Campinas e Goiânia",
+  "tipos": ["Dentista", "Ortodontista"],
+  "modo_local": "brasil",
+  "municipios": ["Campinas - SP", "Goiânia - GO"],
+  "estrategia": "rapida",
+  "filtros": { "excluir_fechados": true, "telefone": "com" }
+}

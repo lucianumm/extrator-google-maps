@@ -1,0 +1,8 @@
+{
+  "nome": "Restaurantes brasileiros na Flórida e em Massachusetts (EUA)",
+  "tipos": ["Brazilian restaurant"],
+  "modo_local": "pais",
+  "pais": { "codigo": "US", "regioes": ["Florida", "Massachusetts"], "max_cidades": 15, "populacao_minima": 50000 },
+  "idioma": "pt-BR",
+  "estrategia": "rapida"
+}
