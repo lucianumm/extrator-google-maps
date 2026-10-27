@@ -1,0 +1,31 @@
+name: 💡 Sugestão
+description: Uma ideia de funcionalidade ou melhoria
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qual problema isso resolve?
+      description: Descreva a necessidade, não só a solução.
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Como você imagina a solução?
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas consideradas
+  - type: dropdown
+    id: ajuda
+    attributes:
+      label: Você pode ajudar a implementar?
+      options:
+        - Sim, posso enviar um Pull Request
+        - Posso ajudar com testes/revisão
+        - Não, só a ideia
+    validations:
+      required: true

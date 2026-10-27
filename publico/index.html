@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Extrator Google Maps</title>
+  <link rel="icon" href="icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="marca"><img src="icone.svg" alt=""> <span>Extrator Google Maps</span></div>
+    <nav>
+      <button class="aba-nav ativa" data-tela="nova">Nova extração</button>
+      <button class="aba-nav" data-tela="tarefas">Tarefas <span id="contador-ativas" class="pilula oculto"></span></button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ======================= NOVA EXTRAÇÃO ======================= -->
+    <section id="tela-nova" class="tela ativa">
+      <form id="form" autocomplete="off">
+        <div class="cartao">
+          <label class="rotulo" for="nome">Nome da tarefa <small>(opcional)</small></label>
+          <input id="nome" type="text" placeholder="Ex.: Dentistas de Campinas">
+        </div>
+
+        <!-- Tipos -->
+        <div class="cartao">
+          <h2>1. O que você quer extrair?</h2>
+          <p class="ajuda">Escolha tipos de negócio da lista, digite um termo livre e tecle Enter, ou adicione vários de uma vez.</p>
+          <div class="seletor" id="sel-tipos">
+            <div class="chips" id="chips-tipos"></div>
+            <input id="busca-tipo" type="text" placeholder="Buscar tipo (ex.: dentista, pizzaria, academia)…">
+            <div class="lista-sugestoes oculto" id="sug-tipos"></div>
+          </div>
+          <div class="linha acoes-pequenas">
+            <select id="grupo-tipos"><option value="">Adicionar um grupo inteiro…</option></select>
+            <button type="button" class="botao secundario" id="btn-massa-tipos">Adicionar em massa</button>
+            <button type="button" class="botao link" id="btn-limpar-tipos">Limpar</button>
+          </div>
+          <div id="massa-tipos" class="oculto">
+            <textarea id="txt-massa-tipos" rows="4" placeholder="Um tipo por linha ou separados por vírgula"></textarea>
+            <button type="button" class="botao secundario" id="btn-add-massa-tipos">Adicionar</button>
+          </div>
+        </div>
+
+        <!-- Localidade -->
+        <div class="cartao">
+          <h2>2. Onde?</h2>
+          <div class="abas" id="abas-local">
+            <button type="button" class="aba ativa" data-modo="brasil">Brasil (estados e cidades)</button>
+            <button type="button" class="aba" data-modo="livre">Qualquer lugar</button>
+            <button type="button" class="aba" data-modo="ponto">Ponto + raio</button>
+            <button type="button" class="aba" data-modo="poligono">Polígono</button>
+            <button type="button" class="aba" data-modo="links">Links do Maps</button>
+          </div>
+
+          <div class="painel-local ativo" data-modo="brasil">
+            <div class="grade-2">
+              <div>
+                <label class="rotulo" for="uf">Estado</label>
+                <select id="uf"><option value="">Selecione o estado…</option></select>
+                <div class="linha acoes-pequenas">
+                  <button type="button" class="botao secundario" id="btn-estado-inteiro" disabled>Adicionar estado inteiro</button>
+                </div>
+                <label class="rotulo" for="meso">Mesorregião</label>
+                <div class="linha">
+                  <select id="meso" disabled><option value="">Selecione o estado primeiro</option></select>
+                  <button type="button" class="botao secundario" id="btn-meso" disabled>Adicionar</button>
+                </div>
+              </div>
+              <div>
+                <label class="rotulo" for="busca-mun">Município</label>
+                <div class="seletor">
+                  <input id="busca-mun" type="text" placeholder="Digite o nome da cidade…">
+                  <div class="lista-sugestoes oculto" id="sug-mun"></div>
+                </div>
+                <p class="ajuda">Busca em todo o Brasil, ou só no estado selecionado.</p>
+                <button type="button" class="botao link" id="btn-massa-mun">Colar lista de cidades</button>
+                <div id="massa-mun" class="oculto">
+                  <textarea id="txt-massa-mun" rows="4" placeholder="Uma por linha, ex.:&#10;Campinas - SP&#10;Belo Horizonte, MG&#10;Curitiba"></textarea>
+                  <button type="button" class="botao secundario" id="btn-add-massa-mun">Adicionar</button>
+                </div>
+              </div>
+            </div>
+            <label class="rotulo">Selecionados <span id="total-mun" class="ajuda"></span></label>
+            <div class="chips caixa" id="chips-locais"><span class="vazio">Nenhuma localidade selecionada</span></div>
+            <label class="rotulo" for="bairros">Bairros <small>(opcional — busca cada bairro dentro de cada cidade, só no modo rápido)</small></label>
+            <textarea id="bairros" rows="2" placeholder="Um por linha, ex.: Centro, Cambuí, Barão Geraldo"></textarea>
+          </div>
+
+          <div class="painel-local" data-modo="livre">
+            <label class="rotulo" for="busca-livre">Localidade (cidade, bairro, região, país…)</label>
+            <div class="seletor">
+              <input id="busca-livre" type="text" placeholder="Ex.: Lisboa, Portugal · Copacabana, Rio de Janeiro · Miami">
+              <div class="lista-sugestoes oculto" id="sug-livre"></div>
+            </div>
+            <p class="ajuda">Sugestões vêm do próprio Google Maps. Tecle Enter para usar o texto como está.</p>
+            <div class="chips caixa" id="chips-livres"><span class="vazio">Nenhuma localidade</span></div>
+            <label class="rotulo" for="raio-livre">Raio da grade (km) <small>(usado só na estratégia Grade)</small></label>
+            <input id="raio-livre" type="number" min="0.5" step="0.5" value="5">
+          </div>
+
+          <div class="painel-local" data-modo="ponto">
+            <p class="ajuda">Clique no mapa para escolher o ponto central ou digite as coordenadas.</p>
+            <div class="grade-3">
+              <div><label class="rotulo" for="lat">Latitude</label><input id="lat" type="number" step="any" placeholder="-22.9056"></div>
+              <div><label class="rotulo" for="lon">Longitude</label><input id="lon" type="number" step="any" placeholder="-47.0608"></div>
+              <div><label class="rotulo" for="raio">Raio (km)</label><input id="raio" type="number" min="0.2" step="0.1" value="2"></div>
+            </div>
+            <div class="mapa" id="mapa-ponto"></div>
+          </div>
+
+          <div class="painel-local" data-modo="poligono">
+            <p class="ajuda">Clique no mapa para desenhar os vértices, ou cole um GeoJSON (ex.: do <a href="https://geojson.io" target="_blank" rel="noopener">geojson.io</a>).</p>
+            <div class="linha acoes-pequenas">
+              <button type="button" class="botao secundario" id="btn-poli-desfazer">Desfazer vértice</button>
+              <button type="button" class="botao secundario" id="btn-poli-limpar">Limpar</button>
+            </div>
+            <div class="mapa" id="mapa-poligono"></div>
+            <textarea id="geojson" rows="4" placeholder='{"type":"FeatureCollection","features":[...]}'></textarea>
+          </div>
+
+          <div class="painel-local" data-modo="links">
+            <label class="rotulo" for="links">Links de busca ou de lugar do Google Maps</label>
+            <textarea id="links" rows="5" placeholder="https://www.google.com/maps/search/restaurantes+em+campinas&#10;https://www.google.com/maps/place/..."></textarea>
+          </div>
+
+          <div class="linha checks">
+            <label><input type="checkbox" id="dentro-cidade" checked> Somente resultados dentro da área/cidade escolhida</label>
+            <label><input type="checkbox" id="embaralhar"> Embaralhar a ordem das cidades</label>
+          </div>
+        </div>
+
+        <!-- Estratégia -->
+        <div class="cartao">
+          <h2>3. Como buscar?</h2>
+          <div class="opcoes-estrategia">
+            <label class="opcao"><input type="radio" name="estrategia" value="rapida" checked>
+              <span><strong>Rápida</strong><br><small>Uma busca por tipo × local, paginando até 400 resultados. Ideal para cidades pequenas e médias.</small></span></label>
+            <label class="opcao"><input type="radio" name="estrategia" value="grade">
+              <span><strong>Grade (mais completa)</strong><br><small>Divide a área em pontos usando a fronteira oficial do IBGE e busca em cada um. Encontra muito mais lugares em cidades grandes, porém demora mais.</small></span></label>
+          </div>
+          <div class="grade-3" id="opcoes-grade">
+            <div><label class="rotulo" for="densidade">Densidade da grade</label>
+              <select id="densidade">
+                <option value="larga">Larga — 1 ponto a cada 2 km</option>
+                <option value="media" selected>Média — 1 ponto por km</option>
+                <option value="densa">Densa — a cada 500 m (demorado)</option>
+                <option value="muito_densa">Muito densa — a cada 250 m (muito demorado)</option>
+              </select></div>
+            <div><label class="rotulo" for="paginas-ponto">Páginas por ponto (20 por página)</label><input id="paginas-ponto" type="number" min="1" max="20" value="2"></div>
+            <div><label class="rotulo" for="max-paginas">Páginas por busca rápida</label><input id="max-paginas" type="number" min="1" max="20" value="20"></div>
+          </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="cartao">
+          <h2>4. Filtros <small>(opcional)</small></h2>
+          <div class="grade-4">
+            <div><label class="rotulo" for="f-min-av">Mín. de avaliações</label><input id="f-min-av" type="number" min="0"></div>
+            <div><label class="rotulo" for="f-max-av">Máx. de avaliações</label><input id="f-max-av" type="number" min="0"></div>
+            <div><label class="rotulo" for="f-nota-min">Nota mínima</label><input id="f-nota-min" type="number" min="0" max="5" step="0.1"></div>
+            <div><label class="rotulo" for="f-nota-max">Nota máxima</label><input id="f-nota-max" type="number" min="0" max="5" step="0.1"></div>
+            <div><label class="rotulo" for="f-site">Site</label>
+              <select id="f-site"><option value="">Tanto faz</option><option value="com">Com site</option><option value="sem">Sem site</option></select></div>
+            <div><label class="rotulo" for="f-tel">Telefone</label>
+              <select id="f-tel"><option value="">Tanto faz</option><option value="com">Com telefone</option><option value="sem">Sem telefone</option></select></div>
+            <div><label class="rotulo" for="f-cat">Categoria contém</label><input id="f-cat" type="text" placeholder="ex.: odonto, implante"></div>
+            <div><label class="rotulo" for="f-cat-ex">Excluir categoria</label><input id="f-cat-ex" type="text" placeholder="ex.: hospital"></div>
+          </div>
+          <label class="check"><input type="checkbox" id="f-fechados" checked> Ignorar estabelecimentos fechados (temporária ou permanentemente)</label>
+        </div>
+
+        <!-- Extras -->
+        <div class="cartao">
+          <h2>5. Dados extras</h2>
+
+          <label class="check"><input type="checkbox" id="x-detalhes" checked> <strong>Detalhes completos de cada lugar</strong> <small>(descrição, foto de capa, total de fotos, distribuição das notas, palavras-chave das avaliações, horários de pico, concorrentes, plus code)</small></label>
+
+          <label class="check"><input type="checkbox" id="x-fotos"> <strong>Extrair fotos</strong></label>
+          <div class="grade-3 sub" id="opc-fotos">
+            <div><label class="rotulo" for="x-fotos-max">Máx. por lugar (0 = todas)</label><input id="x-fotos-max" type="number" min="0" value="20"></div>
+            <div><label class="check"><input type="checkbox" id="x-fotos-baixar"> Baixar os arquivos para a pasta da tarefa</label>
+                 <label class="check"><input type="checkbox" id="x-fotos-sv"> Incluir imagens do Street View</label></div>
+            <div><p class="ajuda">Sem login o Google mostra dezenas de fotos por lugar. Para a galeria completa, entre na sua conta Google em <b>Avançado → Sessão do Google</b>.</p></div>
+          </div>
+
+          <label class="check"><input type="checkbox" id="x-aval"> <strong>Extrair avaliações</strong></label>
+          <div class="grade-3 sub" id="opc-aval">
+            <div><label class="rotulo" for="x-aval-max">Máx. por lugar (0 = todas)</label><input id="x-aval-max" type="number" min="0" value="20"></div>
+            <div><label class="rotulo" for="x-aval-ord">Ordenar por</label>
+              <select id="x-aval-ord"><option value="mais_recentes">Mais recentes</option><option value="mais_relevantes">Mais relevantes</option><option value="maior_nota">Maior nota</option><option value="menor_nota">Menor nota</option></select></div>
+            <div><label class="rotulo" for="x-aval-desde">Somente a partir de</label><input id="x-aval-desde" type="date"></div>
+          </div>
+
+          <label class="check"><input type="checkbox" id="x-contatos"> <strong>Buscar e-mails e redes sociais no site da empresa</strong> <small>(Instagram, Facebook, LinkedIn, WhatsApp, YouTube, TikTok, X)</small></label>
+          <div class="sub" id="opc-contatos">
+            <div class="grade-3">
+              <div><label class="rotulo" for="x-paginas">Páginas extras por site</label><input id="x-paginas" type="number" min="0" max="15" value="3"></div>
+              <div><label class="rotulo" for="x-recom">E-mails recomendados</label>
+                <select id="x-recom"><option value="1">Melhor 1</option><option value="2">Melhores 2</option><option value="3">Melhores 3</option></select></div>
+            </div>
+            <label class="check"><input type="checkbox" id="x-verificar"> Verificar se os e-mails existem</label>
+            <div class="grade-3 sub" id="opc-verificar">
+              <div><label class="rotulo" for="x-servico">Serviço de verificação</label>
+                <select id="x-servico">
+                  <option value="gratis">Grátis (DNS/MX + SMTP)</option>
+                  <option value="millionverifier">MillionVerifier (sua chave)</option>
+                  <option value="zerobounce">ZeroBounce (sua chave)</option>
+                </select></div>
+              <div><label class="rotulo" for="x-chave-verif">Chave de API do serviço</label><input id="x-chave-verif" type="password" placeholder="somente para serviços pagos"></div>
+              <div><label class="check"><input type="checkbox" id="x-verif-todos"> Verificar todos os e-mails (não só os recomendados)</label></div>
+            </div>
+          </div>
+
+          <label class="check"><input type="checkbox" id="x-leads"> <strong>Decisores e contatos do Apollo.io</strong> <small>(usa a sua chave de API do Apollo)</small></label>
+          <div class="sub" id="opc-leads">
+            <div class="grade-4">
+              <div><label class="rotulo" for="x-apollo-chave">Chave de API do Apollo</label><input id="x-apollo-chave" type="password"></div>
+              <div><label class="rotulo" for="x-apollo-max">Máx. de pessoas por empresa</label><input id="x-apollo-max" type="number" min="1" max="25" value="3"></div>
+              <div><label class="rotulo" for="x-apollo-cargos">Cargos (separados por vírgula)</label><input id="x-apollo-cargos" type="text" placeholder="CEO, Diretor comercial, Sócio"></div>
+              <div><label class="rotulo" for="x-apollo-local">Localização da pessoa</label><input id="x-apollo-local" type="text" placeholder="São Paulo, Brazil"></div>
+            </div>
+            <label class="rotulo">Senioridade</label>
+            <div class="linha checks" id="x-apollo-senior">
+              <label><input type="checkbox" value="owner" checked> Dono</label><label><input type="checkbox" value="founder" checked> Fundador</label>
+              <label><input type="checkbox" value="c_suite" checked> Diretoria (C-level)</label><label><input type="checkbox" value="partner"> Sócio</label>
+              <label><input type="checkbox" value="vp" checked> VP</label><label><input type="checkbox" value="head"> Head</label>
+              <label><input type="checkbox" value="director" checked> Diretor</label><label><input type="checkbox" value="manager"> Gerente</label>
+              <label><input type="checkbox" value="senior"> Sênior</label><label><input type="checkbox" value="entry"> Júnior</label><label><input type="checkbox" value="intern"> Estagiário</label>
+            </div>
+            <label class="rotulo">Status do e-mail no Apollo</label>
+            <div class="linha checks" id="x-apollo-status">
+              <label><input type="checkbox" value="verified" checked> Verificado</label><label><input type="checkbox" value="unverified"> Não verificado</label><label><input type="checkbox" value="likely to engage"> Provável engajamento</label>
+            </div>
+          </div>
+          <label class="check"><input type="checkbox" id="lembrar-chaves"> Lembrar as chaves de API neste computador</label>
+        </div>
+
+        <!-- Avançado -->
+        <details class="cartao">
+          <summary><h2>6. Avançado</h2></summary>
+          <div class="grade-4">
+            <div><label class="rotulo" for="idioma">Idioma dos dados</label>
+              <select id="idioma"><option value="pt-BR">Português (Brasil)</option><option value="pt-PT">Português (Portugal)</option><option value="es">Espanhol</option><option value="en">Inglês</option><option value="fr">Francês</option><option value="it">Italiano</option><option value="de">Alemão</option></select></div>
+            <div><label class="rotulo" for="regiao">Região (país do Google)</label>
+              <select id="regiao"><option value="br">Brasil</option><option value="pt">Portugal</option><option value="us">Estados Unidos</option><option value="ar">Argentina</option><option value="mx">México</option><option value="es">Espanha</option><option value="">Automático</option></select></div>
+            <div><label class="rotulo" for="max-consulta">Máx. resultados por busca</label><input id="max-consulta" type="number" min="1" placeholder="sem limite"></div>
+            <div><label class="rotulo" for="max-total">Máx. resultados no total</label><input id="max-total" type="number" min="1" placeholder="sem limite"></div>
+            <div><label class="rotulo" for="paralelo">Buscas em paralelo</label><input id="paralelo" type="number" min="1" max="6" value="2"></div>
+          </div>
+          <p class="ajuda">Mais buscas em paralelo é mais rápido, mas aumenta a chance de o Google limitar temporariamente (o programa espera e tenta de novo).</p>
+
+          <h3>Sessão do Google</h3>
+          <p class="ajuda" id="estado-sessao">Carregando…</p>
+          <div class="linha">
+            <button type="button" class="botao secundario" id="btn-login">Entrar na conta Google</button>
+            <button type="button" class="botao secundario" id="btn-renovar">Renovar sessão</button>
+            <button type="button" class="botao link" id="btn-limpar-sessao">Apagar sessão</button>
+          </div>
+          <label class="check"><input type="checkbox" id="auto-navegador" checked> Abrir o navegador automaticamente se o Google pedir verificação</label>
+
+          <h3>Diagnóstico</h3>
+          <p class="ajuda">Testa busca, detalhes, avaliações, fotos e sugestões no Google e mostra se o formato das respostas continua compatível.</p>
+          <button type="button" class="botao secundario" id="btn-diagnostico">Executar diagnóstico</button>
+          <div id="resultado-diagnostico"></div>
+        </details>
+
+        <div class="barra-iniciar">
+          <span id="estimativa" class="ajuda"></span>
+          <button type="submit" class="botao primario grande">Iniciar extração</button>
+        </div>
+        <p id="erro-form" class="erro oculto"></p>
+      </form>
+    </section>
+
+    <!-- ======================= TAREFAS ======================= -->
+    <section id="tela-tarefas" class="tela">
+      <div id="lista-tarefas"></div>
+    </section>
+
+    <!-- ======================= DETALHE ======================= -->
+    <section id="tela-detalhe" class="tela">
+      <div class="linha">
+        <button class="botao link" id="btn-voltar">← Voltar às tarefas</button>
+      </div>
+      <div class="cartao" id="detalhe-cabecalho"></div>
+      <div class="cartao">
+        <div class="linha barra-resultados">
+          <input id="filtro-resultados" type="search" placeholder="Filtrar resultados (nome, categoria, cidade, telefone…)">
+          <label class="check"><input type="checkbox" id="so-site"> Com site</label>
+          <label class="check"><input type="checkbox" id="so-tel"> Com telefone</label>
+          <label class="check"><input type="checkbox" id="so-email"> Com e-mail</label>
+          <span id="contagem-resultados" class="ajuda"></span>
+        </div>
+        <div class="tabela-rolagem"><table id="tabela"><thead></thead><tbody></tbody></table></div>
+        <div class="linha paginacao" id="paginacao"></div>
+      </div>
+      <details class="cartao"><summary><h2>Registro de atividade</h2></summary><pre id="log"></pre></details>
+    </section>
+  </main>
+
+  <dialog id="modal">
+    <div class="modal-topo"><h3 id="modal-titulo"></h3><button class="botao link" id="modal-fechar">Fechar ✕</button></div>
+    <div id="modal-corpo"></div>
+  </dialog>
+
+  <!-- Pedido de apoio (Pix): ao abrir o programa e ao concluir uma extração -->
+  <dialog id="apoio" class="dialogo-estreito" aria-labelledby="apoio-titulo">
+    <div class="modal-topo"><h3 id="apoio-titulo">☕ Contribua com um café</h3><button type="button" class="botao link" id="apoio-fechar-topo">Fechar ✕</button></div>
+    <div class="apoio-corpo">
+      <div id="apoio-contexto"></div>
+      <p>Este programa é <b>gratuito e de código aberto</b>. Se ele economizou o seu tempo, você pode contribuir com um café
+        por <b>Pix</b> — qualquer valor ajuda a mantê-lo funcionando e atualizado quando o Google mudar.</p>
+      <div class="apoio-grade">
+        <img id="apoio-qr" class="apoio-qr" alt="QR Code do Pix para contribuir com um café" width="220" height="220">
+        <div>
+          <p class="apoio-passos-titulo"><b>Como contribuir pelo QR Code</b></p>
+          <ol class="apoio-passos">
+            <li>Abra o aplicativo do seu banco e escolha <b>Pix → Ler QR Code</b> (ou "Pagar com QR Code").</li>
+            <li>Aponte a câmera do celular para o QR Code ao lado.</li>
+            <li>Digite o valor que quiser, <b>confira o nome do favorecido</b> e confirme.</li>
+          </ol>
+          <p class="ajuda">Prefere copiar? Clique em <b>Copiar código Pix</b> e cole no seu banco em <b>Pix → Pix Copia e Cola</b>.</p>
+          <p class="ajuda" id="apoio-dados"></p>
+        </div>
+      </div>
+      <p class="ajuda">Contribuir é opcional: o programa continua completo e gratuito para todos. Obrigado! 💛</p>
+      <div class="apoio-botoes">
+        <button type="button" class="botao secundario" id="apoio-copiar">Copiar código Pix</button>
+        <button type="button" class="botao" id="apoio-fechar">Fechar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Janela de erro: o que aconteceu, o que faltou e como resolver -->
+  <dialog id="erro-dialogo" class="dialogo-estreito" aria-labelledby="erro-titulo" role="alertdialog">
+    <div class="modal-topo"><h3 id="erro-titulo">Algo deu errado</h3><button type="button" class="botao link" id="erro-fechar-topo">Fechar ✕</button></div>
+    <div class="apoio-corpo">
+      <p id="erro-causa"></p>
+      <div id="erro-faltou-caixa" class="oculto"><p><b>O que faltou:</b></p><ul id="erro-faltou"></ul></div>
+      <div class="erro-solucao"><b>Como resolver:</b> <span id="erro-solucao"></span></div>
+      <details class="erro-tecnico"><summary>Detalhes técnicos</summary><pre id="erro-tecnico"></pre></details>
+      <div class="apoio-botoes">
+        <button type="button" class="botao secundario" id="erro-copiar">Copiar detalhes</button>
+        <button type="button" class="botao" id="erro-fechar">Fechar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="aviso" class="aviso oculto"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>

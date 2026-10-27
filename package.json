@@ -1,0 +1,31 @@
+{
+  "name": "extrator-google-maps",
+  "version": "1.0.0",
+  "description": "Extrator de empresas do Google Maps com interface em português, seleção de localidades do IBGE e coleta de contatos. / Google Maps business extractor with a Brazilian-Portuguese UI and IBGE location picker.",
+  "type": "module",
+  "main": "src/servidor.js",
+  "bin": { "extrator-google-maps": "src/cli.js" },
+  "scripts": {
+    "start": "node src/servidor.js",
+    "cli": "node src/cli.js",
+    "diagnostico": "node scripts/diagnostico.js",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": ["src", "publico", "dados", "exemplos", "scripts", "iniciar.bat", "iniciar.sh", "README.md", "README.en.md", "LICENSE"],
+  "keywords": ["google-maps", "scraper", "web-scraping", "lead-generation", "leads", "ibge", "brasil", "brazil", "express", "playwright", "csv", "excel"],
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "express": "^4.21.2"
+  },
+  "optionalDependencies": {
+    "playwright-core": "^1.48.2"
+  },
+  "license": "MIT",
+  "author": "Lucianum Magnum",
+  "repository": { "type": "git", "url": "git+https://github.com/lucianumm/extrator-google-maps.git" },
+  "bugs": { "url": "https://github.com/lucianumm/extrator-google-maps/issues" },
+  "homepage": "https://github.com/lucianumm/extrator-google-maps#readme"
+}

@@ -1,0 +1,15 @@
+node_modules/
+
+# dados gerados em uso: resultados de extrações (dados pessoais), sessão e perfil do navegador (cookies do Google)
+saida/
+dados/cache/
+
+# editor / sistema
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+.env

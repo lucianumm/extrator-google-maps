@@ -1,0 +1,55 @@
+name: 🐛 Bug
+description: Algo não funciona como deveria
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por relatar! **Remova dados pessoais, cookies e chaves de API** de tudo o que colar aqui.
+        Se o problema é que o Google mudou o formato (campos vazios, "formato inesperado"), use o modelo *O Google mudou o formato*.
+  - type: textarea
+    id: o-que-aconteceu
+    attributes:
+      label: O que aconteceu?
+      description: O que você fez, o que esperava e o que viu.
+    validations:
+      required: true
+  - type: textarea
+    id: passos
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. Nova extração → tipo "dentista", Brasil → Goiânia
+        2. Modo Grade, densidade média
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: erro
+    attributes:
+      label: Detalhes técnicos do erro
+      description: Cole o texto do botão **Copiar detalhes** da janela de erro (ou o log da tarefa).
+      render: text
+  - type: input
+    id: versao
+    attributes:
+      label: Versão do programa
+      description: Está no `package.json` ou na página de releases.
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: so
+    attributes:
+      label: Sistema operacional
+      placeholder: Windows 11 / Ubuntu 24.04 / macOS 15
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Versão do Node.js
+      description: Resultado de `node -v`.
+      placeholder: v22.11.0
+    validations:
+      required: true
